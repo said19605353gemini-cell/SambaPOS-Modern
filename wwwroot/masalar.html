@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SambaPOS - Masalar & Tablet Ekranları Panosu</title>
+    <script src="/lib/tailwind.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800;900&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
+</head>
+<body class="bg-stone-950 text-stone-100 min-h-screen p-8">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+        <!-- Başlık -->
+        <header class="bg-stone-900 border border-stone-800 p-6 rounded-3xl flex flex-wrap items-center justify-between gap-4 shadow-xl">
+            <div class="flex items-center gap-4">
+                <div class="h-12 w-12 bg-amber-500 rounded-2xl flex items-center justify-center text-stone-950 font-black text-2xl">
+                    📱
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-white">Masa Tabletleri & QR Menü Paneli</h1>
+                    <p class="text-xs text-stone-400">Her masadaki tablete ait özel kilitli ekranı tek tıkla açın veya QR kod olarak masaya koyun.</p>
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <a href="/pos.html" target="_blank" class="bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-bold px-4 py-2.5 rounded-xl border border-stone-700 transition">
+                    💻 Kasa Ekranı
+                </a>
+                <a href="/index.html" target="_blank" class="bg-amber-600 hover:bg-amber-500 text-stone-950 text-xs font-bold px-4 py-2.5 rounded-xl transition shadow">
+                    👨‍🍳 Mutfak Ekranı (KDS)
+                </a>
+            </div>
+        </header>
+
+        <!-- Bilgilendirme Kartı -->
+        <div class="bg-amber-500/10 border border-amber-500/20 p-4 rounded-2xl text-xs text-amber-300 flex items-center gap-3">
+            <span class="text-xl">💡</span>
+            <div>
+                <strong>Nasıl Kullanılır?</strong> Bir masadaki tableti açmak için aşağıdaki ilgili masaya tıklayın. 
+                Örneğin <strong>Masa 3'teki tablette</strong> sadece <em>Masa 3</em> kilitli olarak çalışır, müşteri başka masa seçemez. Sipariş doğrudan mutfağa <em>"Masa 3"</em> olarak düşer.
+            </div>
+        </div>
+
+        <!-- Masalar Grid -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4" id="tables-grid">
+            <!-- Dinamik masalar -->
+        </div>
+    </div>
+
+    <script>
+        const grid = document.getElementById("tables-grid");
+        const totalTables = 18;
+
+        for (let i = 1; i <= totalTables; i++) {
+            const card = document.createElement("a");
+            card.href = `/table.html?table=Masa%20${i}`;
+            card.target = "_blank";
+            card.className = "bg-stone-900 border border-stone-800 hover:border-amber-500 hover:scale-105 p-5 rounded-2xl flex flex-col items-center justify-center text-center transition shadow-lg group";
+            card.innerHTML = `
+                <div class="h-14 w-14 bg-stone-950 border border-stone-800 rounded-2xl flex items-center justify-center text-2xl mb-3 group-hover:border-amber-500/50 transition">
+                    🍽️
+                </div>
+                <h3 class="font-extrabold text-white text-base">Masa ${i}</h3>
+                <span class="text-[11px] text-amber-400 font-bold mt-1">Tableti Aç ➔</span>
+                <span class="text-[10px] text-stone-500 font-mono mt-0.5">/table/${i}</span>
+            `;
+            grid.appendChild(card);
+        }
+    </script>
+</body>
+</html>

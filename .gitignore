@@ -1,0 +1,8 @@
+# Build & Publish outputs (100 MB GitHub limit)
+Samba.ModernServer.exe
+*.dll
+*.pdb
+bin/
+obj/
+.vs/
+*.user

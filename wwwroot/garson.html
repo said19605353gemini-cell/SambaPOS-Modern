@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Garson Mobil El Terminali - PIN & Ciro Raporlu</title>
+    <script src="/lib/tailwind.js"></script>
+    <script src="/lib/signalr.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; user-select: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- ================= 1. GARSON GÜVENLİK PIN GİRİŞ EKRANI ================= -->
+    <div id="pin-screen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl">
+            <div class="h-14 w-14 bg-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-lg">
+                🤵
+            </div>
+            <h2 class="text-xl font-black text-white">Garson Girişi</h2>
+            <p class="text-xs text-slate-400 mt-1">Siparişe başlamak için 4 haneli PIN girin</p>
+
+            <!-- PIN Göstergesi -->
+            <div class="flex justify-center gap-3 my-5">
+                <span class="pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700"></span>
+                <span class="pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700"></span>
+                <span class="pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700"></span>
+                <span class="pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700"></span>
+            </div>
+
+            <!-- Sayısal Tuş Takımı -->
+            <div class="grid grid-cols-3 gap-2.5">
+                <button onclick="pressPin('1')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">1</button>
+                <button onclick="pressPin('2')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">2</button>
+                <button onclick="pressPin('3')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">3</button>
+                <button onclick="pressPin('4')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">4</button>
+                <button onclick="pressPin('5')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">5</button>
+                <button onclick="pressPin('6')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">6</button>
+                <button onclick="pressPin('7')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">7</button>
+                <button onclick="pressPin('8')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">8</button>
+                <button onclick="pressPin('9')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">9</button>
+                <button onclick="clearPin()" class="h-12 bg-rose-950/40 text-rose-400 hover:bg-rose-900/50 text-xs font-black rounded-2xl transition active:scale-95">SİL</button>
+                <button onclick="pressPin('0')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl transition active:scale-95">0</button>
+                <button onclick="verifyPin()" class="h-12 bg-indigo-600 hover:bg-indigo-500 text-xs font-black rounded-2xl transition active:scale-95 shadow-lg">GİRİŞ</button>
+            </div>
+
+            <!-- Demo PIN Listesi -->
+            <div class="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-500 text-left">
+                <strong>Tanımlı PIN'ler:</strong><br>
+                Ali: <span class="text-amber-400 font-bold">1234</span> | Mehmet: <span class="text-amber-400 font-bold">5678</span> | Fatma: <span class="text-amber-400 font-bold">9999</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 2. GARSON ANA ÇALIŞMA EKRANI ================= -->
+    <div id="main-waiter-view" class="hidden flex-1 flex flex-col">
+        <!-- Üst Bar: Giriş Yapan Garson Bilgisi, Ciro & Çıkış -->
+        <header class="bg-indigo-950/90 border-b border-indigo-800/60 px-5 py-3 flex items-center justify-between sticky top-0 z-40 shadow-lg">
+            <div class="flex items-center space-x-3">
+                <span class="h-9 w-9 bg-indigo-500 rounded-xl flex items-center justify-center font-black text-slate-950 text-lg">🤵</span>
+                <div>
+                    <h1 id="active-waiter-title" class="text-sm font-black text-white flex items-center gap-1.5">Garson: Ali Yılmaz</h1>
+                    <span id="active-waiter-role" class="text-[10px] text-indigo-300 font-semibold">Kıdemli Garson</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2">
+                <!-- Ciro Raporu Butonu -->
+                <button onclick="openRevenueReport()" class="bg-indigo-900/80 hover:bg-indigo-800 border border-indigo-700 px-3 py-1.5 rounded-xl font-bold text-xs text-amber-300 flex items-center gap-1 shadow">
+                    <span>📊</span> Ciro Raporum
+                </button>
+                <!-- Çıkış Yap / Kitle Butonu -->
+                <button onclick="logoutWaiter()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 px-2.5 py-1.5 rounded-xl font-bold text-xs text-rose-300">
+                    🔒 Çıkış
+                </button>
+            </div>
+        </header>
+
+        <!-- Mutfaktan Yeni Çıkan Pişmiş Yemekler Bildirim Barı -->
+        <div id="ready-dishes-bar" class="bg-emerald-950/80 border-b border-emerald-800/80 px-4 py-2 flex items-center justify-between text-xs text-emerald-200 font-bold">
+            <div class="flex items-center gap-2">
+                <span class="text-base animate-bounce">🔔</span>
+                <span id="ready-status-text">Mutfak dinleniyor, hazır yemekler burada gözükür.</span>
+            </div>
+            <span id="ready-time" class="text-[10px] text-emerald-400 font-mono"></span>
+        </div>
+
+        <!-- Masalar ve Sipariş Bölümü -->
+        <main class="flex-1 p-4 overflow-y-auto space-y-4">
+            <div>
+                <h2 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider mb-2">Masa Seçin:</h2>
+                <div class="grid grid-cols-4 sm:grid-cols-6 gap-2" id="garson-tables"></div>
+            </div>
+
+            <div>
+                <div class="flex items-center justify-between mb-2">
+                    <h2 class="text-xs font-extrabold text-slate-400 uppercase tracking-wider">Menüden Ekle:</h2>
+                    <span id="target-table-label" class="text-xs font-black text-amber-400">Seçili: Masa 1</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5" id="garson-menu"></div>
+            </div>
+        </main>
+
+        <!-- Garson Sepeti -->
+        <footer class="bg-slate-900 border-t border-slate-800 p-4 sticky bottom-0 z-40">
+            <div class="flex items-center justify-between mb-3 text-xs">
+                <div>
+                    <span class="text-slate-400">Garson Sepeti:</span>
+                    <strong id="garson-cart-summary" class="text-white ml-1 font-bold">0 Kalem</strong>
+                </div>
+                <div class="text-right">
+                    <span class="text-slate-400">Toplam:</span>
+                    <strong id="garson-cart-total" class="text-emerald-400 font-black text-base ml-1">0,00 ₺</strong>
+                </div>
+            </div>
+            <button onclick="sendGarsonOrder()" id="garson-send-btn" disabled class="w-full bg-slate-800 text-slate-500 font-black py-3.5 rounded-xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 cursor-not-allowed">
+                <span>👨‍🍳</span> Masanın Siparişini Mutfağa Gönder
+            </button>
+        </footer>
+    </div>
+
+    <!-- ================= 3. GARSON CİRO & PERFORMANS RAPORU MODAL ================= -->
+    <div id="report-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div>
+                    <h3 class="text-lg font-black text-white">Garson Ciro & Performans Raporu</h3>
+                    <p class="text-xs text-slate-400">Günün satışları ve işletmeye kazandırdığınız tutar</p>
+                </div>
+                <button onclick="closeRevenueReport()" class="text-slate-400 hover:text-white font-bold text-sm">✕</button>
+            </div>
+
+            <!-- Özet İstatistik Kartları -->
+            <div class="grid grid-cols-3 gap-2.5 text-center">
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 font-bold block">TOPLAM CİRO</span>
+                    <span id="rep-total-revenue" class="text-base font-black text-emerald-400 mt-1 block">0,00 ₺</span>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 font-bold block">ADİSYON SAYISI</span>
+                    <span id="rep-order-count" class="text-base font-black text-amber-400 mt-1 block">0 Adet</span>
+                </div>
+                <div class="bg-slate-950 p-3 rounded-2xl border border-slate-800">
+                    <span class="text-[10px] text-slate-400 font-bold block">SATILAN ÜRÜN</span>
+                    <span id="rep-items-sold" class="text-base font-black text-indigo-400 mt-1 block">0 Adet</span>
+                </div>
+            </div>
+
+            <!-- Son Alınan Siparişler -->
+            <div>
+                <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Bugünkü Siparişleriniz:</h4>
+                <div id="rep-orders-list" class="space-y-1.5 max-h-48 overflow-y-auto pr-1 text-xs"></div>
+            </div>
+
+            <button onclick="closeRevenueReport()" class="w-full bg-slate-800 hover:bg-slate-700 py-3 rounded-2xl font-bold text-xs text-slate-200 transition">Kapat</button>
+        </div>
+    </div>
+
+    <script>
+        let savedStaff = localStorage.getItem("samba_staff");
+        let registeredWaiters = {
+            "1234": { name: "Ali Yılmaz", role: "Kıdemli Garson" },
+            "5678": { name: "Mehmet Can", role: "Garson" },
+            "9999": { name: "Fatma Demir", role: "Garson / Barista" },
+            "1111": { name: "Kasa / Kasiyer", role: "Kasa Personeli" }
+        };
+        if (savedStaff) {
+            try {
+                const sArr = JSON.parse(savedStaff);
+                registeredWaiters = {};
+                sArr.forEach(s => {
+                    registeredWaiters[s.pin] = { name: s.name, role: s.role };
+                });
+            } catch(e){}
+        }
+
+        let savedMenu = localStorage.getItem("samba_menu");
+        let quickMenu = savedMenu ? JSON.parse(savedMenu) : [
+            { id: 1, name: "Urfa Kebap", price: 340, vat: 10, icon: "🍢" },
+            { id: 2, name: "İskender Kebap", price: 380, vat: 10, icon: "🥩" },
+            { id: 3, name: "Çıtır Lahmacun", price: 95, vat: 10, icon: "🫓" },
+            { id: 4, name: "Mercimek Çorbası", price: 90, vat: 10, icon: "🍲" },
+            { id: 5, name: "Künefe (Kaymaklı)", price: 180, vat: 10, icon: "🍯" },
+            { id: 6, name: "Yayık Ayranı", price: 35, vat: 10, icon: "🥛" }
+        ];
+
+        // PIN Giriş Fonksiyonları
+        function pressPin(digit) {
+            if (currentPin.length < 4) {
+                currentPin += digit;
+                updatePinDots();
+                if (currentPin.length === 4) {
+                    setTimeout(verifyPin, 150);
+                }
+            }
+        }
+
+        function clearPin() {
+            currentPin = "";
+            updatePinDots();
+        }
+
+        function updatePinDots() {
+            const dots = document.querySelectorAll(".pin-dot");
+            dots.forEach((dot, idx) => {
+                if (idx < currentPin.length) {
+                    dot.className = "pin-dot h-3.5 w-3.5 rounded-full bg-indigo-500 border border-indigo-400 scale-110 transition-all";
+                } else {
+                    dot.className = "pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700 transition-all";
+                }
+            });
+        }
+
+        function verifyPin() {
+            if (registeredWaiters[currentPin]) {
+                loggedInWaiter = registeredWaiters[currentPin];
+                document.getElementById("pin-screen").classList.add("hidden");
+                document.getElementById("main-waiter-view").classList.remove("hidden");
+                document.getElementById("active-waiter-title").textContent = "Garson: " + loggedInWaiter.name;
+                document.getElementById("active-waiter-role").textContent = loggedInWaiter.role + " (PIN: " + currentPin + ")";
+            } else {
+                alert("Hatalı PIN! Lütfen tekrar deneyin. (Örn: 1234, 5678, 9999)");
+                clearPin();
+            }
+        }
+
+        function logoutWaiter() {
+            loggedInWaiter = null;
+            clearPin();
+            document.getElementById("main-waiter-view").classList.add("hidden");
+            document.getElementById("pin-screen").classList.remove("hidden");
+        }
+
+        // Ciro ve Performans Raporunu Getir
+        async function openRevenueReport() {
+            if (!loggedInWaiter) return;
+            try {
+                const res = await fetch("/api/waiters/report");
+                const reports = await res.json();
+                const myReport = reports.find(r => r.name === loggedInWaiter.name) || {
+                    formattedRevenue: "0,00 ₺",
+                    orderCount: 0,
+                    itemsSold: 0,
+                    recentOrders: []
+                };
+
+                document.getElementById("rep-total-revenue").textContent = myReport.formattedRevenue;
+                document.getElementById("rep-order-count").textContent = myReport.orderCount + " Adet";
+                document.getElementById("rep-items-sold").textContent = myReport.itemsSold + " Adet";
+
+                const list = document.getElementById("rep-orders-list");
+                if (myReport.recentOrders && myReport.recentOrders.length > 0) {
+                    list.innerHTML = myReport.recentOrders.map(o => `
+                        <div class="p-2.5 bg-slate-950 rounded-xl border border-slate-800 flex justify-between items-center">
+                            <div>
+                                <span class="font-bold text-white">${o.tableNumber}</span>
+                                <span class="text-[10px] text-slate-500 block">${o.date}</span>
+                            </div>
+                            <span class="font-black text-emerald-400">${o.totalAmount.toFixed(2)} ₺</span>
+                        </div>
+                    `).join('');
+                } else {
+                    list.innerHTML = `<p class="text-slate-500 italic py-4 text-center">Henüz bu oturumda tamamlanan satışınız yok.</p>`;
+                }
+
+                document.getElementById("report-modal").classList.remove("hidden");
+            } catch (e) {
+                alert("Rapor alınamadı: " + e);
+            }
+        }
+
+        function closeRevenueReport() {
+            document.getElementById("report-modal").classList.add("hidden");
+        }
+
+        // Masaları Listele
+        const tGrid = document.getElementById("garson-tables");
+        for (let i = 1; i <= 16; i++) {
+            const btn = document.createElement("button");
+            btn.className = `py-2 rounded-xl text-xs font-bold border transition ${i === 1 ? 'bg-indigo-600 text-white border-indigo-500 font-black shadow-md' : 'bg-slate-900 border-slate-800 text-slate-300'}`;
+            btn.textContent = `M${i}`;
+            btn.onclick = () => {
+                document.querySelectorAll("#garson-tables button").forEach(b => {
+                    b.className = "py-2 rounded-xl text-xs font-bold border bg-slate-900 border-slate-800 text-slate-300";
+                });
+                btn.className = "py-2 rounded-xl text-xs font-bold border bg-indigo-600 text-white border-indigo-500 font-black shadow-md";
+                selectedTable = `Masa ${i}`;
+                document.getElementById("target-table-label").textContent = `Seçili: ${selectedTable}`;
+            };
+            tGrid.appendChild(btn);
+        }
+
+        // Menü Listele
+        const mGrid = document.getElementById("garson-menu");
+        quickMenu.forEach(item => {
+            const c = document.createElement("div");
+            c.className = "bg-slate-900 border border-slate-800 p-3 rounded-xl active:scale-95 transition cursor-pointer flex flex-col justify-between";
+            c.innerHTML = `
+                <div>
+                    <span class="text-xl">${item.icon}</span>
+                    <h4 class="font-bold text-white text-xs mt-1 leading-snug">${item.name}</h4>
+                </div>
+                <div class="mt-2 flex items-center justify-between">
+                    <span class="text-amber-400 font-extrabold text-xs">${item.price} ₺</span>
+                    <span class="bg-indigo-600 text-white text-[10px] font-black px-2 py-0.5 rounded">+</span>
+                </div>
+            `;
+            c.onclick = () => {
+                const ex = garsonCart.find(x => x.id === item.id);
+                if (ex) ex.quantity++;
+                else garsonCart.push({ ...item, quantity: 1 });
+                updateCart();
+            };
+            mGrid.appendChild(c);
+        });
+
+        function updateCart() {
+            const total = garsonCart.reduce((sum, i) => sum + (i.price * i.quantity), 0);
+            const count = garsonCart.reduce((sum, i) => sum + i.quantity, 0);
+            document.getElementById("garson-cart-summary").textContent = `${count} Kalem`;
+            document.getElementById("garson-cart-total").textContent = total.toLocaleString('tr-TR', { minimumFractionDigits: 2 }) + " ₺";
+
+            const btn = document.getElementById("garson-send-btn");
+            if (count > 0) {
+                btn.disabled = false;
+                btn.className = "w-full bg-emerald-600 hover:bg-emerald-500 active:scale-98 text-white font-black py-3.5 rounded-xl text-sm transition-all shadow-xl flex items-center justify-center gap-2 cursor-pointer";
+            } else {
+                btn.disabled = true;
+                btn.className = "w-full bg-slate-800 text-slate-500 font-black py-3.5 rounded-xl text-sm transition-all shadow-lg flex items-center justify-center gap-2 cursor-not-allowed";
+            }
+        }
+
+        async function sendGarsonOrder() {
+            if (garsonCart.length === 0 || !loggedInWaiter) return;
+
+            const payload = {
+                tableNumber: selectedTable,
+                waiterName: `${loggedInWaiter.name} (${currentPin})`,
+                items: garsonCart.map(i => ({
+                    menuItemName: i.name,
+                    quantity: i.quantity,
+                    price: i.price,
+                    vatRate: i.vat,
+                    status: "Bekliyor"
+                }))
+            };
+
+            await fetch("/api/orders", {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            garsonCart = [];
+            updateCart();
+            alert(`${selectedTable} siparişi ${loggedInWaiter.name} adına mutfağa gönderildi ve cironuza eklendi!`);
+        }
+
+        // ================= SIGNALR BİLDİRİMİ =================
+        const conn = new signalR.HubConnectionBuilder().withUrl("/hubs/pos").withAutomaticReconnect().build();
+        conn.on("ItemStatusChanged", (data) => {
+            if (data.status === "Hazır") {
+                playGarsonZil();
+                document.getElementById("ready-status-text").innerHTML = `🔥 <strong class="text-white">${data.tableNumber}: ${data.ItemName}</strong> PİŞTİ! Hemen servise alınız.`;
+                document.getElementById("ready-time").textContent = data.Time || "";
+                document.getElementById("ready-dishes-bar").className = "bg-emerald-600 px-4 py-2 flex items-center justify-between text-xs text-white font-extrabold shadow-lg animate-pulse";
+            }
+        });
+
+        function playGarsonZil() {
+            try {
+                const ctx = new (window.AudioContext || window.webkitAudioContext)();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.type = "sine";
+                osc.frequency.setValueAtTime(880, ctx.currentTime);
+                osc.frequency.setValueAtTime(1318.51, ctx.currentTime + 0.15);
+                gain.gain.setValueAtTime(0.4, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.6);
+            } catch (e) { }
+        }
+        conn.start();
+    </script>
+</body>
+</html>

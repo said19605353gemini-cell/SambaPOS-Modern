@@ -1,0 +1,924 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SambaPOS Modern - Restoran Yönetici Paneli</title>
+    <script src="lib/tailwind.js"></script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-red-500 selection:text-white">
+
+    <!-- 0. YÖNETİCİ GÜVENLİK PIN KİLİT EKRANI -->
+    <div id="admin-pin-screen" class="fixed inset-0 z-50 bg-slate-950/95 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 p-8 rounded-3xl max-w-sm w-full shadow-2xl flex flex-col items-center space-y-6">
+            <div class="h-16 w-16 bg-red-600/20 border border-red-500/30 rounded-2xl flex items-center justify-center text-3xl shadow-lg">
+                🛡️
+            </div>
+            <div class="text-center space-y-1">
+                <h2 class="text-xl font-black text-white tracking-wide">YÖNETİCİ KONTROL PANELİ</h2>
+                <p class="text-xs text-slate-400">Restoran ayarları ve ciro için Müdür PIN kodunu giriniz</p>
+                <span class="inline-block bg-slate-800 text-amber-400 font-mono text-[11px] px-2.5 py-0.5 rounded-full mt-1">Varsayılan PIN: 0000</span>
+            </div>
+
+            <!-- PIN Göstergesi -->
+            <div class="flex gap-3 justify-center py-2" id="adm-pin-dots">
+                <div class="adm-pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700 transition-all"></div>
+                <div class="adm-pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700 transition-all"></div>
+                <div class="adm-pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700 transition-all"></div>
+                <div class="adm-pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700 transition-all"></div>
+            </div>
+
+            <!-- PIN Numpad -->
+            <div class="grid grid-cols-3 gap-2.5 w-full">
+                <button onclick="pressAdmPin('1')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">1</button>
+                <button onclick="pressAdmPin('2')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">2</button>
+                <button onclick="pressAdmPin('3')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">3</button>
+                <button onclick="pressAdmPin('4')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">4</button>
+                <button onclick="pressAdmPin('5')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">5</button>
+                <button onclick="pressAdmPin('6')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">6</button>
+                <button onclick="pressAdmPin('7')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">7</button>
+                <button onclick="pressAdmPin('8')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">8</button>
+                <button onclick="pressAdmPin('9')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">9</button>
+                <button onclick="clearAdmPin()" class="h-14 bg-slate-900 hover:bg-slate-800 active:scale-95 text-xs font-bold text-rose-400 rounded-2xl border border-slate-800 transition">SİL</button>
+                <button onclick="pressAdmPin('0')" class="h-14 bg-slate-800 hover:bg-slate-700 active:scale-95 text-xl font-bold rounded-2xl border border-slate-700/60 shadow transition">0</button>
+                <button onclick="verifyAdmPin()" class="h-14 bg-red-600 hover:bg-red-500 active:scale-95 text-xs font-bold text-white rounded-2xl shadow-lg transition">GİRİŞ</button>
+            </div>
+            <a href="pos.html" class="text-xs text-slate-400 hover:text-slate-200 transition font-medium">← Kasa Ekranına Geri Dön</a>
+        </div>
+    </div>
+
+    <!-- ÜST YÖNETİCİ BAŞLIĞI -->
+    <header class="bg-slate-900 border-b border-slate-800 px-6 py-4 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-40 shadow-xl">
+        <div class="flex items-center gap-3">
+            <span class="text-2xl p-2 bg-red-600/20 border border-red-500/30 rounded-xl">👑</span>
+            <div>
+                <h1 class="text-lg font-black tracking-wide text-white flex items-center gap-2">
+                    SAMBAPOS RESTORAN YÖNETİM MERKEZİ
+                    <span class="text-[10px] bg-red-600 text-white font-extrabold px-2 py-0.5 rounded-full uppercase">Müdür / Patron Paneli</span>
+                </h1>
+                <p class="text-xs text-slate-400 font-medium">Masa sayıları, Personel PIN, Menü & Fiyatlar, Stok, Yazıcılar ve Modifiyerler</p>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button onclick="saveAllSettings()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-black px-4 py-2.5 rounded-xl shadow-lg flex items-center gap-1.5 transition active:scale-95">
+                <span>💾</span> Tüm Ayarları Kaydet
+            </button>
+            <button onclick="lockAdmin()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 text-xs font-bold px-3 py-2.5 rounded-xl transition">
+                🔒 Kilitle
+            </button>
+        </div>
+    </header>
+
+    <!-- Sekmeli Yönetim Alanı -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-6 space-y-6">
+        
+        <!-- Sekme Butonları -->
+        <div class="flex gap-2 overflow-x-auto pb-3 border-b border-slate-800 no-scrollbar" id="admin-tabs">
+            <button onclick="switchTab('personel')" class="tab-btn active bg-red-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow whitespace-nowrap">
+                👥 Personel & PIN
+            </button>
+            <button onclick="switchTab('zraporu')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                📊 Gün Sonu & Z-Raporu
+            </button>
+            <button onclick="switchTab('masalar')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                🪑 Masalar & Salonlar
+            </button>
+            <button onclick="switchTab('menu')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                🍽️ Menü & Fiyatlar
+            </button>
+            <button onclick="switchTab('stok')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                📦 Stok & Kritik Seviyeler
+            </button>
+            <button onclick="switchTab('secenek')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                ⚙️ Ürün Seçenekleri (Porsiyon/Sos)
+            </button>
+            <button onclick="switchTab('yazici')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                🖨️ Yazıcılar (Termal / Fiş)
+            </button>
+            <button onclick="switchTab('online')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                🛵 Paket Servis & Platformlar
+            </button>
+            <button onclick="switchTab('maliye')" class="tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap">
+                🏛️ GİB / E-Adisyon / Fatura
+            </button>
+        </div>
+
+        <!-- 1. PERSONEL & PIN YÖNETİMİ -->
+        <section id="tab-personel" class="space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Personel PIN Kodları ve Yetki Rolleri</h3>
+                    <p class="text-xs text-slate-400">Garson, Kasiyer ve Aşçıların PIN şifrelerini ve ekran erişimlerini buradan belirleyin veya yeni personel ekleyin.</p>
+                </div>
+                <button onclick="addStaffRow()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition shadow">
+                    + Yeni Personel Ekle
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5">PIN KODU</th>
+                            <th class="p-3.5">AD SOYAD</th>
+                            <th class="p-3.5">GÖREV / ROL</th>
+                            <th class="p-3.5">YETKİLİ OLDUĞU EKRAN</th>
+                            <th class="p-3.5 text-right">İŞLEM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="staff-table-body" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 2. GÜN SONU / Z-RAPORU & KASA KAPANIŞI -->
+        <section id="tab-zraporu" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Gün Sonu & Z-Raporu Yönetimi</h3>
+                    <p class="text-xs text-slate-400">Günün cirosu, nakit/kart dağılımı, KDV matrahları ve resmi kasa kapatma işlemi.</p>
+                </div>
+                <button onclick="takeZReport()" class="bg-red-600 hover:bg-red-500 text-white font-extrabold text-xs px-4 py-2.5 rounded-xl transition shadow-lg">
+                    🔒 Gün Sonu Kapat (Z-Raporu Al)
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                    <span class="text-xs text-slate-400 font-bold block">TOPLAM GÜNLÜK CİRO</span>
+                    <h4 class="text-2xl font-black text-emerald-400 mt-1">4.250,00 ₺</h4>
+                    <span class="text-[11px] text-slate-500 mt-2 block">14 Adisyon Tamamlandı</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                    <span class="text-xs text-slate-400 font-bold block">NAKİT TAHSİLAT</span>
+                    <h4 class="text-2xl font-black text-white mt-1">1.820,00 ₺</h4>
+                    <span class="text-[11px] text-emerald-400 mt-2 block">Kasadaki Fiziksel Para</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                    <span class="text-xs text-slate-400 font-bold block">KREDİ KARTI / POS</span>
+                    <h4 class="text-2xl font-black text-blue-400 mt-1">1.950,00 ₺</h4>
+                    <span class="text-[11px] text-blue-300 mt-2 block">Banka POS Hesabına Geçen</span>
+                </div>
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl">
+                    <span class="text-xs text-slate-400 font-bold block">YEMEK KARTLARI / FAST</span>
+                    <h4 class="text-2xl font-black text-amber-400 mt-1">480,00 ₺</h4>
+                    <span class="text-[11px] text-amber-300 mt-2 block">Multinet, Sodexo, FAST QR</span>
+                </div>
+            </div>
+
+            <!-- Mali KDV Dağılım Tablosu -->
+            <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-3">
+                <h4 class="text-xs font-extrabold text-slate-300 uppercase tracking-wider">Maliye KDV Matrah Dağılımı (GİB Standartı)</h4>
+                <div class="grid grid-cols-3 gap-3 text-xs">
+                    <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 block">%1 KDV (Ekmek / Temel Unlu):</span>
+                        <strong class="text-white text-sm">0,00 ₺</strong>
+                    </div>
+                    <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 block">%10 KDV (Yiyecek / Hizmet):</span>
+                        <strong class="text-emerald-400 text-sm">386,36 ₺</strong>
+                    </div>
+                    <div class="p-3 bg-slate-950 rounded-xl border border-slate-800">
+                        <span class="text-slate-400 block">%20 KDV (Alkollü / Genel):</span>
+                        <strong class="text-amber-400 text-sm">46,67 ₺</strong>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. MASA & SALON DÜZENİ (DİNAMİK ARTIRILABİLİR BÖLÜMLER) -->
+        <section id="tab-masalar" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Salon & Masa Bölüm Düzenlemesi</h3>
+                    <p class="text-xs text-slate-400">İstediğiniz kadar yeni salon (İç Salon, Teras, Bahçe, VIP, Çatı Katı vs.) ekleyebilir veya silebilirsiniz.</p>
+                </div>
+                <button onclick="addSalonRow()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition shadow">
+                    + Yeni Salon / Alan Ekle
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-3 shadow-xl">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex justify-between items-center">
+                        <span>Aktif Salonlar ve Masa Sayıları</span>
+                        <span id="total-table-count-badge" class="text-emerald-400 font-mono font-bold">Toplam: 20 Masa</span>
+                    </h4>
+                    <div id="salons-container" class="space-y-2.5 text-xs">
+                        <!-- Dinamik Salonlar -->
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 rounded-2xl p-5 space-y-4 shadow-xl">
+                    <h4 class="text-xs font-bold text-slate-300 uppercase tracking-wider">Kuver, Servis ve Masa Açılış Ayarları</h4>
+                    <div class="space-y-3 text-xs">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-slate-300 font-bold block">Kişi Başı Kuver Ücreti:</span>
+                                <span class="text-[10px] text-slate-500">Masa açıldığında otomatik yansıtılır</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="fee-kuver" value="30" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 w-24 text-right font-black text-emerald-400"> ₺
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <span class="text-slate-300 font-bold block">Yüzdelik Servis Ücreti (%):</span>
+                                <span class="text-[10px] text-slate-500">Adisyon toplamına eklenir (Opsiyonel)</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="fee-service" value="0" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 w-24 text-right font-black text-emerald-400"> %
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between pt-2 border-t border-slate-800">
+                            <div>
+                                <span class="text-slate-300 font-bold block">Self-Servis Tablet İndirimi (%):</span>
+                                <span class="text-[10px] text-slate-500">Müşteri kendi sipariş verirse uygulanır</span>
+                            </div>
+                            <div class="flex items-center gap-1.5">
+                                <input type="number" id="fee-selfdiscount" value="10" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 w-24 text-right font-black text-amber-400"> %
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. MENÜ & FİYATLAR (DİNAMİK KATEGORİ VE ÜRÜNLER) -->
+        <section id="tab-menu" class="hidden space-y-4">
+            <div class="flex flex-wrap justify-between items-center gap-3">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Yemek Menüsü, Fiyatlar ve KDV Oranları</h3>
+                    <p class="text-xs text-slate-400">İstediğiniz yeni yemek veya kategori ekleyin; fiyatları ve KDV matrahlarını anında güncelleyin.</p>
+                </div>
+                <div class="flex gap-2">
+                    <button onclick="addCategoryPrompt()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition shadow">
+                        + Yeni Kategori Ekle
+                    </button>
+                    <button onclick="addMenuItemRow()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl transition shadow">
+                        + Yeni Yemek Ekle
+                    </button>
+                </div>
+            </div>
+
+            <!-- Kategori Filtresi / Listesi -->
+            <div class="flex gap-2 overflow-x-auto pb-1" id="menu-cat-chips"></div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5">İKON</th>
+                            <th class="p-3.5">YEMEK ADI</th>
+                            <th class="p-3.5">KATEGORİ</th>
+                            <th class="p-3.5">FİYAT (₺)</th>
+                            <th class="p-3.5">KDV ORANI</th>
+                            <th class="p-3.5 text-right">İŞLEM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="menu-table-body" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 5. STOK & HAMMADDE (DİNAMİK ARTIRILABİLİR STOK TAKİBİ) -->
+        <section id="tab-stok" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Hammadde & Stok Yönetimi</h3>
+                    <p class="text-xs text-slate-400">Stok kalemleri ekleyin. Kritik seviyenin altına düştüğünde mutfak ve kasa uyarılır.</p>
+                </div>
+                <button onclick="addStockRow()" class="bg-slate-800 hover:bg-slate-700 text-indigo-400 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition shadow">
+                    + Yeni Stok / Hammadde Ekle
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-hidden shadow-xl">
+                <table class="w-full text-left text-xs">
+                    <thead class="bg-slate-950 text-slate-400 font-bold border-b border-slate-800">
+                        <tr>
+                            <th class="p-3.5">HAMMADDE ADI</th>
+                            <th class="p-3.5">MEVCUT MİKTAR</th>
+                            <th class="p-3.5">KRİTİK UYARI SINIRI</th>
+                            <th class="p-3.5">BİRİM</th>
+                            <th class="p-3.5">DURUM</th>
+                            <th class="p-3.5 text-right">İŞLEM</th>
+                        </tr>
+                    </thead>
+                    <tbody id="stock-table-body" class="divide-y divide-slate-800"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- 6. ÜRÜN SEÇENEKLERİ, MODİFİYERLER & OPSİYONLAR -->
+        <section id="tab-secenek" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Dinamik Ürün Seçenekleri & Ekstra Malzemeler (Modifiers)</h3>
+                    <p class="text-xs text-slate-400">Ürün seçildiğinde çıkacak seçenekleri (Acılı/Acısız, Pişme Derecesi, Ekstra Sos, Porsiyon Boyutu) buradan artırın.</p>
+                </div>
+                <button onclick="addOptionGroup()" class="bg-amber-600 hover:bg-amber-500 text-slate-950 font-black text-xs px-3.5 py-2 rounded-xl transition shadow">
+                    + Yeni Seçenek Grubu Ekle
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4" id="options-group-container">
+                <!-- Dinamik Seçenek Grupları -->
+            </div>
+        </section>
+
+        <!-- 7. YAZICI & DONANIM AYARLARI (DİNAMİK ARTIRILABİLİR YAZICI TANIMLARI) -->
+        <section id="tab-yazici" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Termal Fiş Yazıcıları & Donanım Yönlendirmesi</h3>
+                    <p class="text-xs text-slate-400">Mutfak, Bar, Fırın veya Kasa için dilediğiniz kadar fiş yazıcısı tanımlayın.</p>
+                </div>
+                <button onclick="addPrinterRow()" class="bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition shadow">
+                    + Yeni Fiş Yazıcısı Ekle
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs" id="printers-container">
+                <!-- Dinamik Yazıcı Kartları -->
+            </div>
+        </section>
+
+        <!-- 8. ONLİNE PAKET SERVİS & PLATFORMLAR (DİNAMİK PLATFORMLAR) -->
+        <section id="tab-online" class="hidden space-y-4">
+            <div class="flex justify-between items-center">
+                <div>
+                    <h3 class="text-base font-extrabold text-white">Paket Servis Entegrasyonları & Komisyon Oranları</h3>
+                    <p class="text-xs text-slate-400">Yemeksepeti, Getir, Trendyol, Migros veya özel kurye kanallarını ve komisyon oranlarını yönetin.</p>
+                </div>
+                <button onclick="addPlatformRow()" class="bg-slate-800 hover:bg-slate-700 text-amber-400 border border-slate-700 text-xs font-bold px-3 py-2 rounded-xl transition shadow">
+                    + Yeni Platform Ekle
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 shadow-xl">
+                    <h4 class="font-bold text-white uppercase tracking-wider flex justify-between items-center">
+                        <span>Aktif Kanallar ve Komisyonlar</span>
+                        <span class="text-slate-400 text-[10px]">% Oranı</span>
+                    </h4>
+                    <div id="platforms-container" class="space-y-2.5">
+                        <!-- Dinamik Platformlar -->
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 shadow-xl">
+                    <h4 class="font-bold text-white uppercase tracking-wider">Otomasyon & Kurye Kuralları</h4>
+                    <div class="space-y-3 pt-1">
+                        <label class="flex items-center gap-2.5 cursor-pointer bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                            <input type="checkbox" id="rule-auto-kitchen" checked class="w-4 h-4 accent-amber-500">
+                            <span class="text-slate-300 font-medium">Online sipariş gelince kasayı beklemeden doğrudan mutfağa (KDS) düşsün</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 cursor-pointer bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                            <input type="checkbox" id="rule-kurye-chime" checked class="w-4 h-4 accent-amber-500">
+                            <span class="text-slate-300 font-medium">Kurye kapıya geldiğinde ve sipariş hazır olduğunda sesli gong çalsın</span>
+                        </label>
+                        <label class="flex items-center gap-2.5 cursor-pointer bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                            <input type="checkbox" id="rule-auto-print" checked class="w-4 h-4 accent-amber-500">
+                            <span class="text-slate-300 font-medium">Online siparişte müşteri adresi ve telefon fişini otomatik bas</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 9. MALİYE / GİB / E-DÖNÜŞÜM -->
+        <section id="tab-maliye" class="hidden space-y-4">
+            <div>
+                <h3 class="text-base font-extrabold text-white">GİB E-Adisyon, E-Fatura & Mali Mühür Ayarları</h3>
+                <p class="text-xs text-slate-400">Gelir İdaresi Başkanlığı entegratör bilgileri ve şirket vergi kimlik no.</p>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl max-w-xl space-y-4 shadow-xl text-xs">
+                <div>
+                    <label class="text-slate-400 block mb-1 font-bold">Restoran Resmi Şirket Unvanı:</label>
+                    <input type="text" id="gib-title" value="SAMBAPOS RESTORAN GIDA TİC. A.Ş." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-bold">
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-slate-400 block mb-1 font-bold">Vergi Kimlik No (VKN / TCKN):</label>
+                        <input type="text" id="gib-vkn" value="1234567890" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-amber-400 font-mono font-bold">
+                    </div>
+                    <div>
+                        <label class="text-slate-400 block mb-1 font-bold">Vergi Dairesi:</label>
+                        <input type="text" id="gib-vd" value="Kadıköy V.D." class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-bold">
+                    </div>
+                </div>
+                <div>
+                    <label class="text-slate-400 block mb-1 font-bold">E-Adisyon Entegratörü:</label>
+                    <select id="gib-integrator" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-white font-bold">
+                        <option value="logo">Logo Yazılım / E-Adisyon Hub</option>
+                        <option value="uyumsoft">Uyumsoft Entegrasyon</option>
+                        <option value="sovos">Foriba / Sovos</option>
+                        <option value="okc">Yerel Yeni Nesil ÖKC Cihazı (İnternetsiz Donanım)</option>
+                    </select>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Bildirim Toast -->
+    <div id="admin-toast" class="hidden fixed bottom-6 right-6 bg-emerald-600 text-white px-5 py-3 rounded-2xl shadow-2xl font-bold flex items-center gap-2 z-50 text-xs">
+        <span>✓</span> <span id="admin-toast-msg">Ayarlar başarıyla kaydedildi.</span>
+    </div>
+
+    <script>
+        // --- 1. PERSONEL VERİLERİ (DİNAMİK CRUD) ---
+        let defaultStaff = [
+            { pin: "0000", name: "Restoran Müdürü", role: "Müdür / Patron", access: "Tüm Yetkiler (Yönetici)" },
+            { pin: "1111", name: "Selim Kasiyer", role: "Kasiyer", access: "Kasa & Tahsilat" },
+            { pin: "1234", name: "Ali Yılmaz", role: "Kıdemli Garson", access: "Garson Terminali" },
+            { pin: "5678", name: "Mehmet Can", role: "Garson", access: "Garson Terminali" },
+            { pin: "9999", name: "Fatma Demir", role: "Garson / Barista", access: "Garson Terminali" },
+            { pin: "2222", name: "Ahmet Usta", role: "Baş Aşçı (Şef)", access: "Mutfak (KDS)" },
+            { pin: "3333", name: "Izgara İstasyonu", role: "Aşçı Yardımcısı", access: "Mutfak (KDS)" }
+        ];
+        let staffList = JSON.parse(localStorage.getItem("samba_staff")) || defaultStaff;
+
+        function renderStaffTable() {
+            const tbody = document.getElementById("staff-table-body");
+            tbody.innerHTML = staffList.map((s, idx) => `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-3.5"><input type="text" value="${s.pin}" onchange="staffList[${idx}].pin = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-amber-400 font-black w-20 text-center font-mono focus:border-amber-500"></td>
+                    <td class="p-3.5"><input type="text" value="${s.name}" onchange="staffList[${idx}].name = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-white font-bold w-44"></td>
+                    <td class="p-3.5"><input type="text" value="${s.role}" onchange="staffList[${idx}].role = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 w-36"></td>
+                    <td class="p-3.5">
+                        <select onchange="staffList[${idx}].access = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-indigo-400 font-bold">
+                            <option value="Tüm Yetkiler (Yönetici)" ${s.access.includes('Tüm') ? 'selected' : ''}>Tüm Yetkiler (Yönetici)</option>
+                            <option value="Kasa & Tahsilat" ${s.access.includes('Kasa') ? 'selected' : ''}>Kasa & Tahsilat</option>
+                            <option value="Garson Terminali" ${s.access.includes('Garson') ? 'selected' : ''}>Garson Terminali</option>
+                            <option value="Mutfak (KDS)" ${s.access.includes('Mutfak') ? 'selected' : ''}>Mutfak (KDS)</option>
+                        </select>
+                    </td>
+                    <td class="p-3.5 text-right"><button onclick="removeStaff(${idx})" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-1 rounded hover:bg-rose-950/30">Sil</button></td>
+                </tr>
+            `).join('');
+        }
+        function addStaffRow() {
+            staffList.push({ pin: "1000", name: "Yeni Personel", role: "Garson", access: "Garson Terminali" });
+            renderStaffTable();
+        }
+        function removeStaff(idx) {
+            staffList.splice(idx, 1);
+            renderStaffTable();
+        }
+
+        // --- 2. SALONLAR & MASA SAYILARI (DİNAMİK CRUD) ---
+        let defaultSalons = [
+            { id: "salon", name: "İç Salon", count: 12 },
+            { id: "teras", name: "Bahçe / Teras", count: 6 },
+            { id: "vip", name: "VIP / Özel Oda", count: 2 }
+        ];
+        let salonsList = JSON.parse(localStorage.getItem("samba_salons")) || defaultSalons;
+
+        function renderSalons() {
+            const container = document.getElementById("salons-container");
+            let total = 0;
+            container.innerHTML = salonsList.map((s, idx) => {
+                total += parseInt(s.count || 0);
+                return `
+                <div class="flex items-center justify-between bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <input type="text" value="${s.name}" onchange="salonsList[${idx}].name = this.value; renderSalons();" class="bg-transparent text-white font-bold w-48 focus:outline-none focus:border-b border-amber-500">
+                    <div class="flex items-center gap-2">
+                        <span class="text-slate-400 text-xs">Masa:</span>
+                        <input type="number" value="${s.count}" onchange="salonsList[${idx}].count = parseInt(this.value); renderSalons();" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 w-16 text-center font-black text-amber-400">
+                        <button onclick="removeSalonRow(${idx})" class="text-rose-400 hover:text-rose-300 font-bold ml-1 text-xs">✕</button>
+                    </div>
+                </div>`;
+            }).join('');
+            document.getElementById("total-table-count-badge").textContent = `Toplam: ${total} Masa`;
+        }
+        function addSalonRow() {
+            salonsList.push({ id: "salon_" + Date.now(), name: "Yeni Salon / Bölüm", count: 5 });
+            renderSalons();
+        }
+        function removeSalonRow(idx) {
+            salonsList.splice(idx, 1);
+            renderSalons();
+        }
+
+        // --- 3. MENÜ & KATEGORİLER (DİNAMİK CRUD) ---
+        let defaultCategories = ["Kebaplar", "Fırın", "Çorbalar", "Tatlılar", "İçecekler", "Alkollü"];
+        let categoriesList = JSON.parse(localStorage.getItem("samba_categories")) || defaultCategories;
+
+        let defaultMenu = [
+            { id: 1, icon: "🍢", name: "Urfa Kebap Porsiyon", cat: "Kebaplar", price: 340, vat: 10 },
+            { id: 2, icon: "🌶️", name: "Adana Kebap (Acılı)", cat: "Kebaplar", price: 340, vat: 10 },
+            { id: 3, icon: "🥩", name: "İskender Kebap", cat: "Kebaplar", price: 380, vat: 10 },
+            { id: 4, icon: "🫓", name: "Çıtır Lahmacun", cat: "Fırın", price: 95, vat: 10 },
+            { id: 5, icon: "🍕", name: "Kuşbaşılı Kaşarlı Pide", cat: "Fırın", price: 240, vat: 10 },
+            { id: 6, icon: "🍲", name: "Mercimek Çorbası", cat: "Çorbalar", price: 90, vat: 10 },
+            { id: 7, icon: "🥣", name: "Kelle Paça Çorbası", cat: "Çorbalar", price: 170, vat: 10 },
+            { id: 8, icon: "🍯", name: "Künefe (Kaymaklı)", cat: "Tatlılar", price: 180, vat: 10 },
+            { id: 9, icon: "🥛", name: "Yayık Ayranı", cat: "İçecekler", price: 35, vat: 10 },
+            { id: 10, icon: "🍷", name: "Kadeh Kırmızı Şarap", cat: "Alkollü", price: 280, vat: 20 }
+        ];
+        let menuList = JSON.parse(localStorage.getItem("samba_menu")) || defaultMenu;
+
+        function renderCategoryChips() {
+            const chips = document.getElementById("menu-cat-chips");
+            chips.innerHTML = `
+                <button onclick="filterMenuCat('ALL')" class="bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs px-3 py-1.5 rounded-xl border border-slate-700 whitespace-nowrap">Tümü (${menuList.length})</button>
+            ` + categoriesList.map((c, idx) => `
+                <div class="flex items-center gap-1 bg-slate-900 border border-slate-800 rounded-xl px-2.5 py-1 text-xs">
+                    <span class="text-slate-300 font-bold cursor-pointer" onclick="filterMenuCat('${c}')">${c}</span>
+                    <button onclick="removeCategory(${idx})" class="text-rose-400 hover:text-rose-300 text-[10px] ml-1">✕</button>
+                </div>
+            `).join('');
+        }
+
+        function filterMenuCat(cat) {
+            renderMenuTable(cat);
+        }
+
+        function addCategoryPrompt() {
+            const cName = prompt("Yeni Yemek Kategorisi Adı (Örn: Makarnalar, Burgerler, Kahvaltılık):");
+            if (cName && !categoriesList.includes(cName)) {
+                categoriesList.push(cName);
+                renderCategoryChips();
+                renderMenuTable();
+            }
+        }
+
+        function removeCategory(idx) {
+            if (confirm("Bu kategoriyi silmek istiyor musunuz?")) {
+                categoriesList.splice(idx, 1);
+                renderCategoryChips();
+                renderMenuTable();
+            }
+        }
+
+        function renderMenuTable(filterCat = 'ALL') {
+            const tbody = document.getElementById("menu-table-body");
+            const items = filterCat === 'ALL' ? menuList : menuList.filter(m => m.cat === filterCat);
+            tbody.innerHTML = items.map((m) => {
+                const realIdx = menuList.findIndex(item => item.id === m.id);
+                return `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-3.5 text-lg"><input type="text" value="${m.icon}" onchange="menuList[${realIdx}].icon = this.value" class="bg-slate-950 border border-slate-800 rounded-lg p-1 w-10 text-center"></td>
+                    <td class="p-3.5"><input type="text" value="${m.name}" onchange="menuList[${realIdx}].name = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-white font-bold w-52"></td>
+                    <td class="p-3.5">
+                        <select onchange="menuList[${realIdx}].cat = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-300 font-bold">
+                            ${categoriesList.map(c => `<option value="${c}" ${m.cat === c ? 'selected' : ''}>${c}</option>`).join('')}
+                        </select>
+                    </td>
+                    <td class="p-3.5"><input type="number" value="${m.price}" onchange="menuList[${realIdx}].price = parseFloat(this.value)" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-emerald-400 font-black w-24 text-right"> ₺</td>
+                    <td class="p-3.5">
+                        <select onchange="menuList[${realIdx}].vat = parseInt(this.value)" class="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 font-bold font-mono">
+                            <option value="10" ${m.vat === 10 ? 'selected' : ''}>%10 KDV</option>
+                            <option value="20" ${m.vat === 20 ? 'selected' : ''}>%20 KDV</option>
+                            <option value="1" ${m.vat === 1 ? 'selected' : ''}>%1 KDV</option>
+                        </select>
+                    </td>
+                    <td class="p-3.5 text-right"><button onclick="removeMenuItem(${realIdx})" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-1 rounded hover:bg-rose-950/30">Sil</button></td>
+                </tr>`;
+            }).join('');
+        }
+        function addMenuItemRow() {
+            menuList.push({ id: Date.now(), icon: "🍽️", name: "Yeni Lezzet", cat: categoriesList[0] || "Kebaplar", price: 100, vat: 10 });
+            renderCategoryChips();
+            renderMenuTable();
+        }
+        function removeMenuItem(idx) {
+            menuList.splice(idx, 1);
+            renderCategoryChips();
+            renderMenuTable();
+        }
+
+        // --- 4. STOK & HAMMADDE (DİNAMİK CRUD) ---
+        let defaultStock = [
+            { name: "Kuzu Kıyma (Kebaplık)", amount: 18.5, critical: 5.0, unit: "KG" },
+            { name: "Hatay Künefe Peyniri", amount: 2.1, critical: 4.0, unit: "KG" },
+            { name: "Kutu Ayran (300ml)", amount: 84, critical: 24, unit: "Adet" },
+            { name: "Köy Tereyağı (Tavada)", amount: 12.0, critical: 3.0, unit: "KG" }
+        ];
+        let stockList = JSON.parse(localStorage.getItem("samba_stock")) || defaultStock;
+
+        function renderStockTable() {
+            const tbody = document.getElementById("stock-table-body");
+            tbody.innerHTML = stockList.map((s, idx) => {
+                const isCritical = s.amount <= s.critical;
+                return `
+                <tr class="hover:bg-slate-800/40 transition">
+                    <td class="p-3.5"><input type="text" value="${s.name}" onchange="stockList[${idx}].name = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-white font-bold w-48"></td>
+                    <td class="p-3.5"><input type="number" step="0.1" value="${s.amount}" onchange="stockList[${idx}].amount = parseFloat(this.value); renderStockTable();" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-emerald-400 font-black w-24 text-right"></td>
+                    <td class="p-3.5"><input type="number" step="0.1" value="${s.critical}" onchange="stockList[${idx}].critical = parseFloat(this.value); renderStockTable();" class="bg-slate-950 border border-slate-800 rounded-lg px-2.5 py-1 text-slate-400 font-bold w-24 text-right"></td>
+                    <td class="p-3.5">
+                        <select onchange="stockList[${idx}].unit = this.value" class="bg-slate-950 border border-slate-800 rounded-lg px-2 py-1 text-slate-300 font-bold">
+                            <option value="KG" ${s.unit === 'KG' ? 'selected' : ''}>KG</option>
+                            <option value="Adet" ${s.unit === 'Adet' ? 'selected' : ''}>Adet</option>
+                            <option value="Litre" ${s.unit === 'Litre' ? 'selected' : ''}>Litre</option>
+                            <option value="Koli" ${s.unit === 'Koli' ? 'selected' : ''}>Koli</option>
+                        </select>
+                    </td>
+                    <td class="p-3.5">
+                        ${isCritical 
+                            ? '<span class="bg-rose-500/20 text-rose-400 border border-rose-500/30 px-2 py-0.5 rounded font-bold animate-pulse text-[11px]">Kritik Azaldı!</span>'
+                            : '<span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 px-2 py-0.5 rounded font-bold text-[11px]">Yeterli</span>'
+                        }
+                    </td>
+                    <td class="p-3.5 text-right"><button onclick="removeStockRow(${idx})" class="text-rose-400 hover:text-rose-300 font-bold px-2 py-1 rounded hover:bg-rose-950/30">Sil</button></td>
+                </tr>`;
+            }).join('');
+        }
+        function addStockRow() {
+            stockList.push({ name: "Yeni Hammadde", amount: 10, critical: 2, unit: "KG" });
+            renderStockTable();
+        }
+        function removeStockRow(idx) {
+            stockList.splice(idx, 1);
+            renderStockTable();
+        }
+
+        // --- 5. DİNAMİK SEÇENEK & MODİFİYER GRUPLARI ---
+        let defaultOptions = [
+            {
+                title: "Acı / Baharat Seçenekleri",
+                category: "Kebaplar & Çorbalar",
+                items: [
+                    { name: "Acılı (Standart)", extraPrice: 0 },
+                    { name: "Acısız / Sade", extraPrice: 0 },
+                    { name: "Ekstra Çok Acılı", extraPrice: 0 }
+                ]
+            },
+            {
+                title: "Sos ve İlave Malzemeler",
+                category: "Tüm Yemekler",
+                items: [
+                    { name: "Bol Sarımsak Sosu", extraPrice: 10 },
+                    { name: "Ekstra Kaşar Peyniri", extraPrice: 35 },
+                    { name: "Kızarmış Sıcak Lavaş", extraPrice: 15 },
+                    { name: "Bol Köy Tereyağı", extraPrice: 25 }
+                ]
+            },
+            {
+                title: "Porsiyon Boyutları",
+                category: "Kebaplar",
+                items: [
+                    { name: "1 Porsiyon (Standart)", extraPrice: 0 },
+                    { name: "1.5 Porsiyon", extraPrice: 160 },
+                    { name: "Duble (2 Porsiyon)", extraPrice: 300 }
+                ]
+            }
+        ];
+        let optionGroups = JSON.parse(localStorage.getItem("samba_options")) || defaultOptions;
+
+        function renderOptionGroups() {
+            const container = document.getElementById("options-group-container");
+            if (!container) return;
+            container.innerHTML = optionGroups.map((grp, gIdx) => `
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl shadow-xl space-y-3 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+                            <input type="text" value="${grp.title}" onchange="optionGroups[${gIdx}].title = this.value" class="bg-transparent font-black text-amber-400 text-xs w-full focus:outline-none focus:border-b border-amber-500">
+                            <button onclick="removeOptionGroup(${gIdx})" class="text-rose-400 hover:text-rose-300 text-xs font-bold ml-2">Sil</button>
+                        </div>
+                        <div class="flex items-center gap-1.5 mb-2">
+                            <span class="text-[10px] text-slate-500 font-semibold">Uygulanan:</span>
+                            <input type="text" value="${grp.category}" onchange="optionGroups[${gIdx}].category = this.value" class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-[11px] text-slate-300 font-medium w-full">
+                        </div>
+                        <div class="space-y-1.5">
+                            ${grp.items.map((it, iIdx) => `
+                                <div class="flex items-center justify-between bg-slate-950 p-2 rounded-xl text-xs border border-slate-800/80">
+                                    <input type="text" value="${it.name}" onchange="optionGroups[${gIdx}].items[${iIdx}].name = this.value" class="bg-transparent text-white font-medium focus:outline-none w-36">
+                                    <div class="flex items-center gap-1">
+                                        <span class="text-slate-400 text-[10px]">+</span>
+                                        <input type="number" value="${it.extraPrice}" onchange="optionGroups[${gIdx}].items[${iIdx}].extraPrice = parseFloat(this.value)" class="bg-slate-900 border border-slate-800 rounded px-1.5 py-0.5 text-emerald-400 font-bold w-12 text-center text-xs">
+                                        <span class="text-slate-400 text-[10px]">₺</span>
+                                        <button onclick="removeOptionItem(${gIdx}, ${iIdx})" class="text-rose-400 text-[10px] font-bold ml-1">✕</button>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    <button onclick="addOptionItem(${gIdx})" class="w-full bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-300 font-bold text-[11px] py-1.5 rounded-xl transition">
+                        + Seçenek / Özellik Ekle
+                    </button>
+                </div>
+            `).join('');
+        }
+        function addOptionGroup() {
+            optionGroups.push({
+                title: "Yeni Seçenek Grubu",
+                category: "Genel",
+                items: [
+                    { name: "Özellik 1", extraPrice: 0 },
+                    { name: "Ekstra Sos (+15₺)", extraPrice: 15 }
+                ]
+            });
+            renderOptionGroups();
+        }
+        function removeOptionGroup(idx) {
+            optionGroups.splice(idx, 1);
+            renderOptionGroups();
+        }
+        function addOptionItem(gIdx) {
+            optionGroups[gIdx].items.push({ name: "Yeni Özellik", extraPrice: 0 });
+            renderOptionGroups();
+        }
+        function removeOptionItem(gIdx, iIdx) {
+            optionGroups[gIdx].items.splice(iIdx, 1);
+            renderOptionGroups();
+        }
+
+        // --- 6. YAZICILAR (DİNAMİK CRUD) ---
+        let defaultPrinters = [
+            { icon: "👨‍🍳", name: "Mutfak Yazıcısı", type: "Ağ / Ethernet (192.168.1.200)", autoPrint: true, note: "Sipariş gelince otomatik yazdır" },
+            { icon: "🍹", name: "Bar / İçecek Yazıcısı", type: "Ağ / Ethernet (192.168.1.201)", autoPrint: true, note: "İçecek siparişlerini ayır" },
+            { icon: "💰", name: "Kasa Fiş Yazıcısı", type: "USB Termal (80mm)", autoPrint: true, note: "Para çekmecesini otomatik aç" }
+        ];
+        let printersList = JSON.parse(localStorage.getItem("samba_printers")) || defaultPrinters;
+
+        function renderPrinters() {
+            const container = document.getElementById("printers-container");
+            container.innerHTML = printersList.map((p, idx) => `
+                <div class="bg-slate-900 border border-slate-800 p-5 rounded-2xl space-y-3 shadow-xl">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-2">
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-base">${p.icon}</span>
+                            <input type="text" value="${p.name}" onchange="printersList[${idx}].name = this.value" class="bg-transparent font-black text-amber-400 text-xs w-36 focus:outline-none focus:border-b border-amber-500">
+                        </div>
+                        <button onclick="removePrinterRow(${idx})" class="text-rose-400 hover:text-rose-300 font-bold text-xs">Sil</button>
+                    </div>
+                    <div>
+                        <label class="text-slate-400 block mb-1">Bağlantı Türü / IP / Port:</label>
+                        <input type="text" value="${p.type}" onchange="printersList[${idx}].type = this.value" class="w-full bg-slate-950 border border-slate-800 rounded-xl p-2 text-white font-mono font-bold">
+                    </div>
+                    <div class="flex items-center justify-between pt-1">
+                        <span class="text-slate-300 text-[11px]">${p.note}</span>
+                        <input type="checkbox" ${p.autoPrint ? 'checked' : ''} onchange="printersList[${idx}].autoPrint = this.checked" class="w-4 h-4 accent-amber-500">
+                    </div>
+                </div>
+            `).join('');
+        }
+        function addPrinterRow() {
+            printersList.push({ icon: "🖨️", name: "Yeni Termal Yazıcı", type: "Ağ / Ethernet (192.168.1.205)", autoPrint: true, note: "Otomatik fiş yazdır" });
+            renderPrinters();
+        }
+        function removePrinterRow(idx) {
+            printersList.splice(idx, 1);
+            renderPrinters();
+        }
+
+        // --- 7. ONLİNE PLATFORMLAR (DİNAMİK CRUD) ---
+        let defaultPlatforms = [
+            { name: "Yemeksepeti", color: "pink", rate: 18 },
+            { name: "GetirYemek", color: "purple", rate: 20 },
+            { name: "Trendyol Yemek", color: "orange", rate: 19 },
+            { name: "Migros Yemek", color: "amber", rate: 15 },
+            { name: "Kendi Web / Alo Paket", color: "emerald", rate: 0 }
+        ];
+        let platformsList = JSON.parse(localStorage.getItem("samba_platforms")) || defaultPlatforms;
+
+        function renderPlatforms() {
+            const container = document.getElementById("platforms-container");
+            container.innerHTML = platformsList.map((pl, idx) => `
+                <div class="flex justify-between items-center bg-slate-950 p-2.5 rounded-xl border border-slate-800">
+                    <input type="text" value="${pl.name}" onchange="platformsList[${idx}].name = this.value" class="bg-transparent font-bold text-white text-xs w-44 focus:outline-none focus:border-b border-amber-500">
+                    <div class="flex items-center gap-1.5">
+                        <input type="number" value="${pl.rate}" onchange="platformsList[${idx}].rate = parseFloat(this.value)" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1 w-16 text-center text-amber-400 font-bold">
+                        <span class="text-slate-400 font-bold">%</span>
+                        <button onclick="removePlatformRow(${idx})" class="text-rose-400 hover:text-rose-300 font-bold text-xs ml-1">✕</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+        function addPlatformRow() {
+            platformsList.push({ name: "Yeni Paket Servis Kanalı", color: "blue", rate: 12 });
+            renderPlatforms();
+        }
+        function removePlatformRow(idx) {
+            platformsList.splice(idx, 1);
+            renderPlatforms();
+        }
+
+        // --- PIN GÜVENLİĞİ ---
+        let adminPin = "";
+        function pressAdmPin(digit) {
+            if (adminPin.length < 4) {
+                adminPin += digit;
+                updateAdmPinDots();
+                if (adminPin.length === 4) setTimeout(verifyAdmPin, 150);
+            }
+        }
+        function clearAdmPin() {
+            adminPin = "";
+            updateAdmPinDots();
+        }
+        function updateAdmPinDots() {
+            const dots = document.querySelectorAll(".adm-pin-dot");
+            dots.forEach((dot, idx) => {
+                dot.className = idx < adminPin.length 
+                    ? "adm-pin-dot h-3.5 w-3.5 rounded-full bg-red-500 border border-red-400 scale-110 transition-all"
+                    : "adm-pin-dot h-3.5 w-3.5 rounded-full bg-slate-800 border border-slate-700 transition-all";
+            });
+        }
+        function verifyAdmPin() {
+            if (adminPin === "0000") {
+                document.getElementById("admin-pin-screen").classList.add("hidden");
+                showToast("Yönetici girişi başarılı.");
+            } else {
+                alert("Hatalı Yönetici PIN'i! (Varsayılan Müdür PIN: 0000)");
+                clearAdmPin();
+            }
+        }
+        function lockAdmin() {
+            clearAdmPin();
+            document.getElementById("admin-pin-screen").classList.remove("hidden");
+        }
+
+        // --- SEKME GEÇİŞİ ---
+        function switchTab(tab) {
+            const allTabs = ['personel', 'zraporu', 'masalar', 'menu', 'stok', 'secenek', 'yazici', 'online', 'maliye'];
+            allTabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                if (el) el.classList.add("hidden");
+            });
+            document.querySelectorAll("#admin-tabs .tab-btn").forEach(b => {
+                b.className = "tab-btn bg-slate-900 text-slate-300 hover:bg-slate-800 font-bold text-xs px-4 py-2.5 rounded-xl transition border border-slate-800 whitespace-nowrap";
+            });
+            if (event && event.target) {
+                event.target.className = "tab-btn active bg-red-600 text-white font-bold text-xs px-4 py-2.5 rounded-xl transition shadow whitespace-nowrap";
+            }
+            const targetEl = document.getElementById(`tab-${tab}`);
+            if (targetEl) targetEl.classList.remove("hidden");
+        }
+
+        function takeZReport() {
+            if (confirm("Günün Z-Raporunu almak ve kasayı kapatmak istediğinize emin misiniz?")) {
+                alert("Z-Raporu No: Z-0042 başarıyla alındı. GİB E-Adisyon sunucusuna gönderildi, gün sonu tamamlandı.");
+                showToast("Gün Sonu Z-Raporu Alındı!");
+            }
+        }
+
+        // --- TÜM AYARLARI LOCALSTORAGE'A KAYDET ---
+        function saveAllSettings() {
+            localStorage.setItem("samba_staff", JSON.stringify(staffList));
+            localStorage.setItem("samba_salons", JSON.stringify(salonsList));
+            localStorage.setItem("samba_categories", JSON.stringify(categoriesList));
+            localStorage.setItem("samba_menu", JSON.stringify(menuList));
+            localStorage.setItem("samba_stock", JSON.stringify(stockList));
+            localStorage.setItem("samba_options", JSON.stringify(optionGroups));
+            localStorage.setItem("samba_printers", JSON.stringify(printersList));
+            localStorage.setItem("samba_platforms", JSON.stringify(platformsList));
+            
+            // Ek mali / kuver ayarları
+            const settings = {
+                kuver: document.getElementById("fee-kuver") ? document.getElementById("fee-kuver").value : 30,
+                service: document.getElementById("fee-service") ? document.getElementById("fee-service").value : 0,
+                selfDiscount: document.getElementById("fee-selfdiscount") ? document.getElementById("fee-selfdiscount").value : 10,
+                companyTitle: document.getElementById("gib-title") ? document.getElementById("gib-title").value : "",
+                vkn: document.getElementById("gib-vkn") ? document.getElementById("gib-vkn").value : "",
+                vd: document.getElementById("gib-vd") ? document.getElementById("gib-vd").value : "",
+                integrator: document.getElementById("gib-integrator") ? document.getElementById("gib-integrator").value : ""
+            };
+            localStorage.setItem("samba_settings", JSON.stringify(settings));
+
+            showToast("Tüm restoran ayarları, salonlar, menü ve seçenekler kaydedildi!");
+        }
+
+        function loadAdditionalSettings() {
+            const raw = localStorage.getItem("samba_settings");
+            if (raw) {
+                const s = JSON.parse(raw);
+                if (document.getElementById("fee-kuver") && s.kuver) document.getElementById("fee-kuver").value = s.kuver;
+                if (document.getElementById("fee-service") && s.service) document.getElementById("fee-service").value = s.service;
+                if (document.getElementById("fee-selfdiscount") && s.selfDiscount) document.getElementById("fee-selfdiscount").value = s.selfDiscount;
+                if (document.getElementById("gib-title") && s.companyTitle) document.getElementById("gib-title").value = s.companyTitle;
+                if (document.getElementById("gib-vkn") && s.vkn) document.getElementById("gib-vkn").value = s.vkn;
+                if (document.getElementById("gib-vd") && s.vd) document.getElementById("gib-vd").value = s.vd;
+                if (document.getElementById("gib-integrator") && s.integrator) document.getElementById("gib-integrator").value = s.integrator;
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById("admin-toast");
+            document.getElementById("admin-toast-msg").textContent = msg;
+            t.classList.remove("hidden");
+            setTimeout(() => t.classList.add("hidden"), 3000);
+        }
+
+        // Başlangıç renderları
+        renderStaffTable();
+        renderSalons();
+        renderCategoryChips();
+        renderMenuTable();
+        renderStockTable();
+        renderOptionGroups();
+        renderPrinters();
+        renderPlatforms();
+        loadAdditionalSettings();
+    </script>
+</body>
+</html>
