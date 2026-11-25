@@ -228,6 +228,17 @@
                         class="bg-amber-600/20 hover:bg-amber-600/30 text-amber-300 py-1.5 rounded-lg font-bold">🎁
                         İkram Et</button>
                 </div>
+                <div class="grid grid-cols-3 gap-2 mt-2 text-xs">
+                    <button onclick="printThermalReceipt()"
+                        class="bg-slate-800 hover:bg-slate-700 py-1.5 rounded-lg font-bold text-blue-300">🖨️
+                        Fiş Yazdır</button>
+                    <button onclick="addOrderNote()"
+                        class="bg-slate-800 hover:bg-slate-700 py-1.5 rounded-lg font-bold text-slate-300">📝
+                        Not Ekle</button>
+                    <button onclick="voidOrder()"
+                        class="bg-rose-950/60 hover:bg-rose-900 py-1.5 rounded-lg font-bold text-rose-300">↩️
+                        İptal / İade</button>
+                </div>
             </div>
 
             <!-- Mali Döküm & Aksiyon Butonları -->
@@ -759,6 +770,57 @@
         posSignalR.start().catch(err => console.error("POS SignalR error:", err));
 
         renderProducts();
+        let currentOrderNote = "";
+
+        function addOrderNote() {
+            const note = prompt("Mutfak / Adisyon Notu (Örn: Az pişmiş, soğansız):", currentOrderNote);
+            if (note !== null) {
+                currentOrderNote = note.trim();
+                showToast(currentOrderNote ? `Not eklendi: ${currentOrderNote}` : "Sipariş notu temizlendi.");
+            }
+        }
+
+        function voidOrder() {
+            if (cart.length === 0) {
+                alert("İptal / İade edilecek ürün bulunmuyor.");
+                return;
+            }
+            const reason = prompt("İptal / İade Nedeni (Örn: Müşteri vazgeçti, hatalı giriş):");
+            if (reason !== null && reason.trim() !== "") {
+                clearCart();
+                currentOrderNote = "";
+                showToast(`Adisyon iptal/iade edildi (${reason}).`);
+            }
+        }
+
+        function printThermalReceipt() {
+            if (cart.length === 0) {
+                alert("Yazdırılacak ürün bulunmuyor.");
+                return;
+            }
+            const win = window.open("", "Receipt", "width=340,height=600");
+            const total = document.getElementById("lbl-total").textContent;
+            const vat = document.getElementById("lbl-vat").textContent;
+            const rows = cart.map(i => `<tr><td>${i.quantity}x ${i.name}${i.isGift ? ' (İKRAM)' : ''}</td><td style="text-align:right">${i.isGift ? '0,00' : (i.price * i.quantity).toFixed(2)} ₺</td></tr>`).join('');
+            win.document.write(`
+                <html><head><title>Adisyon Fişi</title>
+                <style>body{font-family:monospace;width:280px;margin:10px auto;font-size:12px;} table{width:100%;border-collapse:collapse;} td{padding:3px 0;} .line{border-top:1px dashed #000;margin:6px 0;}</style>
+                </head><body>
+                <div style="text-align:center"><strong>SAMBAPOS RESTORAN</strong><br/>${currentTable} | ${new Date().toLocaleString('tr-TR')}</div>
+                <div class="line"></div>
+                <table>${rows}</table>
+                ${currentOrderNote ? `<div class="line"></div><div>Not: ${currentOrderNote}</div>` : ''}
+                <div class="line"></div>
+                <div>KDV Toplam: ${vat}</div>
+                <div style="font-size:15px;font-weight:bold;">TOPLAM: ${total}</div>
+                <div class="line"></div>
+                <div style="text-align:center">Afiyet Olsun! (Mali Değeri Yoktur / Bilgi Fişi)</div>
+                <script>window.print();<\/script>
+                </body></html>
+            `);
+            win.document.close();
+        }
+
         renderCart();
     </script>
 </body>
