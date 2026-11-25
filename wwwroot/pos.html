@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="tr">
 
 <head>
@@ -23,7 +23,8 @@
     <!-- ================= KASA GÜVENLİK PIN GİRİŞ EKRANI ================= -->
     <div id="kasa-pin-screen" class="fixed inset-0 bg-slate-950 z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 max-w-xs w-full text-center shadow-2xl">
-            <div class="h-14 w-14 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-lg text-slate-950 font-black">
+            <div
+                class="h-14 w-14 bg-amber-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl shadow-lg text-slate-950 font-black">
                 💰
             </div>
             <h2 class="text-xl font-black text-white">Kasa Girişi</h2>
@@ -37,23 +38,36 @@
             </div>
 
             <div class="grid grid-cols-3 gap-2.5">
-                <button onclick="pressKasaPin('1')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">1</button>
-                <button onclick="pressKasaPin('2')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">2</button>
-                <button onclick="pressKasaPin('3')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">3</button>
-                <button onclick="pressKasaPin('4')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">4</button>
-                <button onclick="pressKasaPin('5')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">5</button>
-                <button onclick="pressKasaPin('6')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">6</button>
-                <button onclick="pressKasaPin('7')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">7</button>
-                <button onclick="pressKasaPin('8')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">8</button>
-                <button onclick="pressKasaPin('9')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">9</button>
-                <button onclick="clearKasaPin()" class="h-12 bg-rose-950/40 text-rose-400 text-xs font-black rounded-2xl active:scale-95">SİL</button>
-                <button onclick="pressKasaPin('0')" class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">0</button>
-                <button onclick="verifyKasaPin()" class="h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-2xl active:scale-95 shadow-lg">GİRİŞ</button>
+                <button onclick="pressKasaPin('1')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">1</button>
+                <button onclick="pressKasaPin('2')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">2</button>
+                <button onclick="pressKasaPin('3')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">3</button>
+                <button onclick="pressKasaPin('4')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">4</button>
+                <button onclick="pressKasaPin('5')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">5</button>
+                <button onclick="pressKasaPin('6')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">6</button>
+                <button onclick="pressKasaPin('7')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">7</button>
+                <button onclick="pressKasaPin('8')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">8</button>
+                <button onclick="pressKasaPin('9')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">9</button>
+                <button onclick="clearKasaPin()"
+                    class="h-12 bg-rose-950/40 text-rose-400 text-xs font-black rounded-2xl active:scale-95">SİL</button>
+                <button onclick="pressKasaPin('0')"
+                    class="h-12 bg-slate-800 hover:bg-slate-700 text-lg font-bold rounded-2xl active:scale-95">0</button>
+                <button onclick="verifyKasaPin()"
+                    class="h-12 bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black rounded-2xl active:scale-95 shadow-lg">GİRİŞ</button>
             </div>
 
             <div class="mt-4 pt-3 border-t border-slate-800 text-[10px] text-slate-500 text-left">
                 <strong>Yetkili Kasa PIN'leri:</strong><br>
-                Kasiyer: <span class="text-amber-400 font-bold">1111</span> | Yönetici (Müdür): <span class="text-amber-400 font-bold">0000</span>
+                Kasiyer: <span class="text-amber-400 font-bold">1111</span> | Yönetici (Müdür): <span
+                    class="text-amber-400 font-bold">0000</span>
             </div>
         </div>
     </div>
@@ -97,7 +111,8 @@
         </div>
 
         <div class="flex items-center gap-3">
-            <button onclick="lockKasa()" class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
+            <button onclick="lockKasa()"
+                class="bg-rose-950/60 hover:bg-rose-900 border border-rose-800/60 text-rose-300 text-xs font-bold px-3 py-2 rounded-xl transition flex items-center gap-1.5 shadow">
                 <span>🔒</span> Kilitle
             </button>
             <a href="/index.html" target="_blank"
@@ -143,19 +158,24 @@
             <div id="tables-bar" class="bg-slate-900/70 border border-slate-800/80 p-3 rounded-2xl">
                 <div class="flex items-center justify-between mb-2">
                     <div class="flex items-center gap-3">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Açık Salon Masaları:</span>
-                        <span class="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-lg font-black" id="current-selected-table">Seçili: Masa 1</span>
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Açık Salon
+                            Masaları:</span>
+                        <span class="text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-lg font-black"
+                            id="current-selected-table">Seçili: Masa 1</span>
                     </div>
 
                     <!-- Türkiye Standartları: Masa Taşıma & Birleştirme Butonları -->
                     <div class="flex items-center gap-2">
-                        <button onclick="openMoveTableModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-700 transition flex items-center gap-1">
+                        <button onclick="openMoveTableModal()"
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-700 transition flex items-center gap-1">
                             <span>↔️</span> Masa Taşı
                         </button>
-                        <button onclick="openMergeTableModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-700 transition flex items-center gap-1">
+                        <button onclick="openMergeTableModal()"
+                            class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold px-2.5 py-1 rounded-lg border border-slate-700 transition flex items-center gap-1">
                             <span>🔗</span> Masa Birleştir
                         </button>
-                        <button onclick="simulateCallerId()" class="bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 text-xs font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1">
+                        <button onclick="simulateCallerId()"
+                            class="bg-indigo-950/70 hover:bg-indigo-900 text-indigo-300 border border-indigo-700/60 text-xs font-bold px-2.5 py-1 rounded-lg transition flex items-center gap-1">
                             <span>📞</span> Arayan Müşteri (Caller-ID)
                         </button>
                     </div>
@@ -284,7 +304,8 @@
             <h3 class="text-lg font-bold mb-1">Hesap Tahsilatı</h3>
             <p id="pay-target-label" class="text-xs text-amber-400 mb-4 font-semibold"></p>
             <div class="space-y-2 mb-4">
-                <button onclick="splitGermanBill()" class="w-full bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl font-bold text-xs flex justify-between items-center text-amber-300 border border-slate-700 mb-2">
+                <button onclick="splitGermanBill()"
+                    class="w-full bg-slate-800 hover:bg-slate-700 p-2.5 rounded-xl font-bold text-xs flex justify-between items-center text-amber-300 border border-slate-700 mb-2">
                     <span>👥 Alman Usulü (Hesabı Eşit Böl)</span>
                     <span class="text-[10px] bg-slate-900 px-2 py-0.5 rounded">Kişi Başı</span>
                 </button>
