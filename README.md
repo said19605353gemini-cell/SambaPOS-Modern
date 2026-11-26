@@ -1,5 +1,7 @@
 # SambaPOS Modern (.NET 11)
 
+> **Not:** Bu proje **SambaPOS V3** altyapısı (`Samba.Domain`, `Samba.Infrastructure`) temel alınarak **Google Antigravity (Gemini)** ile modernize edilip geliştirilmiştir.
+
 Türkiye restoran ve kafe işletmeleri için modernize edilmiş, çoklu cihaz destekli, çevrimdışı (offline-first) çalışabilen yeni nesil POS ve Adisyon yönetim sistemi.
 
 ## 🚀 Özellikler
