@@ -1,11 +1,13 @@
-name: Build SambaPOS Modern
+name: Build & Release SambaPOS Modern
 
 on:
   push:
     branches: [ main, master ]
-  pull_request:
-    branches: [ main, master ]
+    tags: [ 'v*' ]
   workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -25,12 +27,26 @@ jobs:
         run: |
           dotnet publish SourceCode/Samba.ModernServer/Samba.ModernServer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o ./publish
 
+      - name: Package Release Zip
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path ./release-pkg/wwwroot | Out-Null
+          Copy-Item ./publish/Samba.ModernServer.exe ./release-pkg/
+          Copy-Item ./*.bat ./release-pkg/
+          Copy-Item ./appsettings.json ./release-pkg/
+          Copy-Item ./wwwroot/* ./release-pkg/wwwroot/ -Recurse -Force
+          Compress-Archive -Path ./release-pkg/* -DestinationPath ./SambaPOS-Modern-win-x64.zip -Force
+
       - name: Upload Build Artifact
         uses: actions/upload-artifact@v4
         with:
           name: SambaPOS-Modern-win-x64
-          path: |
-            ./publish/Samba.ModernServer.exe
-            ./*.bat
-            ./appsettings.json
-            ./wwwroot/**
+          path: ./SambaPOS-Modern-win-x64.zip
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.0.${{ github.run_number }}
+          name: SambaPOS Modern v1.0.${{ github.run_number }}
+          files: ./SambaPOS-Modern-win-x64.zip
+          generate_release_notes: true
